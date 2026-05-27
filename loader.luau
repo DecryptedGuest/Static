@@ -11,17 +11,10 @@ local Services = {
 }
 
 local CONFIG = {
-    API_SCRIPT_ID = "85a45c6dd86733f3b4b2a1a202d86e06",
     FOLDER_ROOT = "Static",
-    FOLDER_KEYS = "Static/keys",
     FOLDER_ASSETS = "Static/assets",
-    DISCORD_INVITE = "XYsTvuudeU",
     LOGO_URL = "https://raw.githubusercontent.com/Ih0bby/Static/main/logo.png",
     LOGO_PATH = "Static/assets/logo.png",
-    KEY_PROVIDERS = {
-        { name = "Linkvertise — Recommended • ~53s", url = "https://ads.luarmor.net/get_key?for=-LvxiSZlmxoFL" },
-        { name = "LootLabs — ~2m 27s", url = "https://ads.luarmor.net/get_key?for=Static-OWulwoDvNPea" },
-    },
 }
 
 local GAMES = {
@@ -160,9 +153,6 @@ function GameDetector.isSupported()
     local gk, _ = GameDetector.findGame()
     return gk ~= nil
 end
-
-
-local KeyManager = {}
 
 function KeyManager.new(api)
     local self = {
@@ -584,7 +574,7 @@ function UI.build(logoAsset)
     c.redeemLabel = UI.new("TextLabel", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
-        Text = "Redeem",
+        Text = "Launch",
         TextColor3 = T.white,
         TextTransparency = 1,
         Font = Enum.Font.GothamBold,
@@ -1149,14 +1139,7 @@ function Loader.new()
         Utils.ensureFolder(CONFIG.FOLDER_ROOT)
         Utils.ensureFolder(CONFIG.FOLDER_KEYS)
 
-        self.api = Utils.try(function()
-            return loadstring(game:HttpGet("https://sdkAPI-public.luarmor.net/library.lua"))()
-        end, "Failed to load API")
-
-        if not self.api then error("API load failed") end
-        self.api.script_id = CONFIG.API_SCRIPT_ID
-
-        self.keyMgr = KeyManager.new(self.api)
+        self.api = {}
 
         local logoAsset = Assets.loadLogo()
         self.ui = UI.build(logoAsset)
@@ -1220,35 +1203,22 @@ function Loader.new()
         end)
     end
 
-    function self.validateKey(key)
-        if not key or key == "" then
-            self.notify("Warning", "Please enter a key!", T.red)
-            self.shake()
-            return
-        end
-
-        if not GameDetector.isSupported() then
-            self.notify("Unsupported", "This game is not currently supported.", T.red)
-            self.shake()
-            return
-        end
-
-        key = Utils.sanitize(key)
-        self.notify("Validating", "Checking your key...", T.accent)
-
-        local ok, msg = self.keyMgr.validate(key)
-        if ok then
-            self.notify("Success", "Key valid! Loading...", T.green)
-            task.delay(0.5, function()
-                script_key = key
-                self.close()
-                self.api.load_script()
-            end)
-        else
-            self.notify("Error", msg, T.red)
-            self.shake()
-        end
+  function self.validateKey()
+    if not GameDetector.isSupported() then
+        self.notify("Unsupported", "This game is not currently supported.", T.red)
+        self.shake()
+        return
     end
+
+    self.notify("Loading", "Launching script...", T.green)
+
+    task.delay(0.5, function()
+        self.close()
+
+        -- YOUR SCRIPT HERE
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/DecryptedGuest/Static/main/loader.luau"))()
+    end)
+end
 
     function self.openDiscord()
         task.spawn(function()
@@ -1280,8 +1250,8 @@ function Loader.new()
         ui.closeBtn.MouseButton1Click:Connect(function() self.close() end)
 
         ui.redeemBtn.MouseButton1Click:Connect(function()
-            self.validateKey(ui.keyBox.Text)
-        end)
+    self.validateKey()
+end)
 
         ui.getKeyBtn.MouseButton1Click:Connect(function()
             UI.openPanel(ui.gkOverlay, ui.gkCard, ui.gkHeight)
@@ -1315,9 +1285,6 @@ function Loader.new()
         ui.stClose.MouseButton1Click:Connect(function()
             UI.closePanel(ui.stOverlay, ui.stCard)
         end)
-
-        local savedKey = self.keyMgr.load()
-        if savedKey then ui.keyBox.Text = savedKey end
     end
 
     function self.playIntro()
