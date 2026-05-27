@@ -153,8 +153,6 @@ function GameDetector.isSupported()
     local gk, _ = GameDetector.findGame()
     return gk ~= nil
 end
-    return self
-end
 
 
 local T = {
