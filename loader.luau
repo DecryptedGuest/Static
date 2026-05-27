@@ -153,52 +153,6 @@ function GameDetector.isSupported()
     local gk, _ = GameDetector.findGame()
     return gk ~= nil
 end
-
-function KeyManager.new(api)
-    local self = {
-        api = api,
-        keyFile = CONFIG.FOLDER_KEYS .. "/global",
-    }
-
-    function self.load()
-        if isfile and isfile(self.keyFile) then return readfile(self.keyFile) end
-        return nil
-    end
-
-    function self.save(key)
-        Utils.ensureFolder(CONFIG.FOLDER_KEYS)
-        if writefile then writefile(self.keyFile, key) end
-    end
-
-    function self.delete()
-        if isfile and isfile(self.keyFile) and delfile then delfile(self.keyFile) end
-    end
-
-function self.validate(key)
-
-    -- MASTER KEY OVERRIDE
-    if key == "ANGELO-LIFETIME-KEY" then
-        self.save(key)
-        return true, "Master key accepted"
-    end
-
-    local status = self.api.check_key(key)
-    if status.code == "KEY_VALID" then
-        self.save(key)
-        return true, "Key validated successfully"
-    elseif status.code:find("KEY_") then
-        local msgs = {
-            KEY_HWID_LOCKED = "Key linked to different HWID",
-            KEY_INCORRECT = "Key is incorrect",
-            KEY_INVALID = "Key is invalid",
-        }
-        return false, msgs[status.code] or "Unknown key error"
-    else
-        return false, status.message or "Validation failed"
-    end
-end
-
-
     return self
 end
 
@@ -475,92 +429,9 @@ function UI.build(logoAsset)
         Parent = c.loginContent,
     })
 
-    c.keyLabel = UI.new("TextLabel", {
-        Size = UDim2.new(0.5, 0, 0, 16),
-        BackgroundTransparency = 1,
-        Text = "License Key",
-        TextColor3 = T.white,
-        TextTransparency = 1,
-        Font = Enum.Font.GothamSemibold,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 12,
-        Parent = content,
-    })
-
-    c.noKeyLink = UI.new("TextButton", {
-        Size = UDim2.new(0.5, 0, 0, 16),
-        Position = UDim2.new(1, 0, 0, 0),
-        AnchorPoint = Vector2.new(1, 0),
-        BackgroundTransparency = 1,
-        Text = "Don't have a key?",
-        TextColor3 = T.accent,
-        TextTransparency = 1,
-        Font = Enum.Font.GothamMedium,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Right,
-        ZIndex = 12,
-        Parent = content,
-    })
-    c.noKeyLink.MouseEnter:Connect(function() UI.tween(c.noKeyLink, 0.15, { TextColor3 = T.accentglow }) end)
-    c.noKeyLink.MouseLeave:Connect(function() UI.tween(c.noKeyLink, 0.15, { TextColor3 = T.accent }) end)
-
-    c.inputFrame = UI.new("Frame", {
-        Size = UDim2.new(1, 0, 0, 42),
-        Position = UDim2.new(0, 0, 0, 24),
-        BackgroundColor3 = T.input,
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        ZIndex = 12,
-        Parent = content,
-    })
-    UI.corner(c.inputFrame, 8)
-    c.inputStroke = UI.stroke(c.inputFrame, T.inputborder, 1, 1)
-
-    c.inputIcon = UI.new("TextLabel", {
-        Size = UDim2.new(0, 34, 1, 0),
-        Position = UDim2.new(0, 4, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "#",
-        TextColor3 = T.muted,
-        TextTransparency = 1,
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
-        ZIndex = 13,
-        Parent = c.inputFrame,
-    })
-
-    c.keyBox = UI.new("TextBox", {
-        Size = UDim2.new(1, -42, 1, 0),
-        Position = UDim2.new(0, 38, 0, 0),
-        BackgroundTransparency = 1,
-        Text = "",
-        PlaceholderText = "Enter your license key...",
-        PlaceholderColor3 = T.muted,
-        TextColor3 = T.white,
-        TextTransparency = 1,
-        Font = Enum.Font.GothamMedium,
-        TextSize = 13,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ClearTextOnFocus = false,
-        ZIndex = 13,
-        Parent = c.inputFrame,
-    })
-
-    c.keyBox.Focused:Connect(function()
-        UI.tween(c.inputStroke, 0.2, { Color = T.accent })
-        UI.tween(c.inputFrame, 0.2, { BackgroundColor3 = T.inputfocus })
-        UI.tween(c.inputIcon, 0.2, { TextColor3 = T.accent })
-    end)
-    c.keyBox.FocusLost:Connect(function()
-        UI.tween(c.inputStroke, 0.2, { Color = T.inputborder })
-        UI.tween(c.inputFrame, 0.2, { BackgroundColor3 = T.input })
-        UI.tween(c.inputIcon, 0.2, { TextColor3 = T.muted })
-    end)
-
     c.redeemBtn = UI.new("TextButton", {
         Size = UDim2.new(1, 0, 0, 42),
-        Position = UDim2.new(0, 0, 0, 78),
+        Position = UDim2.new(0, 0, 0, 50),
         BackgroundColor3 = T.accent,
         BackgroundTransparency = 1,
         BorderSizePixel = 0,
@@ -574,7 +445,7 @@ function UI.build(logoAsset)
     c.redeemLabel = UI.new("TextLabel", {
         Size = UDim2.new(1, 0, 1, 0),
         BackgroundTransparency = 1,
-        Text = "Launch",
+        Text = "Execute",
         TextColor3 = T.white,
         TextTransparency = 1,
         Font = Enum.Font.GothamBold,
@@ -585,35 +456,6 @@ function UI.build(logoAsset)
 
     c.redeemBtn.MouseEnter:Connect(function() UI.tween(c.redeemBtn, 0.15, { BackgroundColor3 = T.accentglow }) end)
     c.redeemBtn.MouseLeave:Connect(function() UI.tween(c.redeemBtn, 0.15, { BackgroundColor3 = T.accent }) end)
-
-    c.getKeyBtn = UI.new("TextButton", {
-        Size = UDim2.new(1, 0, 0, 42),
-        Position = UDim2.new(0, 0, 0, 128),
-        BackgroundColor3 = T.input,
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Text = "",
-        AutoButtonColor = false,
-        ZIndex = 12,
-        Parent = content,
-    })
-    UI.corner(c.getKeyBtn, 8)
-    c.getKeyStroke = UI.stroke(c.getKeyBtn, T.inputborder, 1, 1)
-
-    c.getKeyLabel = UI.new("TextLabel", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundTransparency = 1,
-        Text = "Get Key",
-        TextColor3 = T.gray,
-        TextTransparency = 1,
-        Font = Enum.Font.GothamSemibold,
-        TextSize = 13,
-        ZIndex = 13,
-        Parent = c.getKeyBtn,
-    })
-
-    c.getKeyBtn.MouseEnter:Connect(function() UI.tween(c.getKeyBtn, 0.15, { BackgroundColor3 = T.hover }) end)
-    c.getKeyBtn.MouseLeave:Connect(function() UI.tween(c.getKeyBtn, 0.15, { BackgroundColor3 = T.input }) end)
 
     local bbar = UI.new("Frame", {
         Size = UDim2.new(1, -56, 0, 46),
@@ -756,156 +598,6 @@ function UI.build(logoAsset)
         ZIndex = 301,
         Parent = c.toast,
     })
-
-    -- ── Get Key Overlay ──
-    c.gkOverlay = UI.new("Frame", {
-        Size = UDim2.new(1, 0, 1, 0),
-        BackgroundColor3 = T.black,
-        BackgroundTransparency = 1,
-        BorderSizePixel = 0,
-        Visible = false,
-        ZIndex = 100,
-        Parent = c.gui,
-    })
-
-    local gkHeight = 100 + (#CONFIG.KEY_PROVIDERS * 50) + 56
-
-    c.gkCard = UI.new("Frame", {
-        Size = UDim2.new(0, 340, 0, 0),
-        Position = UDim2.new(0.5, 0, 0.5, 0),
-        AnchorPoint = Vector2.new(0.5, 0.5),
-        BackgroundColor3 = T.card,
-        BorderSizePixel = 0,
-        ClipsDescendants = true,
-        ZIndex = 101,
-        Parent = c.gkOverlay,
-    })
-    UI.corner(c.gkCard, 12)
-    UI.stroke(c.gkCard, T.cardborder, 1)
-
-    UI.new("TextLabel", {
-        Size = UDim2.new(1, -36, 0, 22),
-        Position = UDim2.new(0, 18, 0, 18),
-        BackgroundTransparency = 1,
-        Text = "Get Your Key",
-        TextColor3 = T.white,
-        Font = Enum.Font.GothamBold,
-        TextSize = 16,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 102,
-        Parent = c.gkCard,
-    })
-
-    UI.new("TextLabel", {
-        Size = UDim2.new(1, -36, 0, 14),
-        Position = UDim2.new(0, 18, 0, 42),
-        BackgroundTransparency = 1,
-        Text = "Select a link below to get your key",
-        TextColor3 = T.muted,
-        Font = Enum.Font.GothamMedium,
-        TextSize = 11,
-        TextXAlignment = Enum.TextXAlignment.Left,
-        ZIndex = 102,
-        Parent = c.gkCard,
-    })
-
-    UI.new("Frame", {
-        Size = UDim2.new(1, -36, 0, 1),
-        Position = UDim2.new(0.5, 0, 0, 66),
-        AnchorPoint = Vector2.new(0.5, 0),
-        BackgroundColor3 = T.cardborder,
-        BorderSizePixel = 0,
-        ZIndex = 102,
-        Parent = c.gkCard,
-    })
-
-    local gkLinks = UI.new("Frame", {
-        Size = UDim2.new(1, -36, 0, #CONFIG.KEY_PROVIDERS * 50 - 8),
-        Position = UDim2.new(0.5, 0, 0, 78),
-        AnchorPoint = Vector2.new(0.5, 0),
-        BackgroundTransparency = 1,
-        ZIndex = 102,
-        Parent = c.gkCard,
-    })
-    UI.new("UIListLayout", { SortOrder = Enum.SortOrder.LayoutOrder, Padding = UDim.new(0, 8), Parent = gkLinks })
-
-    c.gkLinkButtons = {}
-    for i, data in ipairs(CONFIG.KEY_PROVIDERS) do
-        local lb = UI.new("TextButton", {
-            Size = UDim2.new(1, 0, 0, 42),
-            BackgroundColor3 = T.input,
-            BorderSizePixel = 0,
-            Text = "",
-            AutoButtonColor = false,
-            LayoutOrder = i,
-            ZIndex = 103,
-            Parent = gkLinks,
-        })
-        UI.corner(lb, 8)
-        local ls = UI.stroke(lb, T.inputborder, 1)
-
-        UI.new("TextLabel", {
-            Size = UDim2.new(1, -46, 1, 0),
-            Position = UDim2.new(0, 14, 0, 0),
-            BackgroundTransparency = 1,
-            Text = data.name,
-            TextColor3 = T.white,
-            Font = Enum.Font.GothamSemibold,
-            TextSize = 12,
-            TextXAlignment = Enum.TextXAlignment.Left,
-            ZIndex = 104,
-            Parent = lb,
-        })
-
-        UI.new("TextLabel", {
-            Size = UDim2.new(0, 26, 1, 0),
-            Position = UDim2.new(1, -8, 0, 0),
-            AnchorPoint = Vector2.new(1, 0),
-            BackgroundTransparency = 1,
-            Text = ">",
-            TextColor3 = T.accent,
-            Font = Enum.Font.GothamBold,
-            TextSize = 14,
-            ZIndex = 104,
-            Parent = lb,
-        })
-
-        lb.MouseEnter:Connect(function() UI.tween(lb, 0.15, { BackgroundColor3 = T.hover }); UI.tween(ls, 0.15, { Color = T.accent }) end)
-        lb.MouseLeave:Connect(function() UI.tween(lb, 0.15, { BackgroundColor3 = T.input }); UI.tween(ls, 0.15, { Color = T.inputborder }) end)
-
-        table.insert(c.gkLinkButtons, { button = lb, data = data })
-    end
-
-    local gkClose = UI.new("TextButton", {
-        Size = UDim2.new(1, -36, 0, 38),
-        Position = UDim2.new(0.5, 0, 0, gkHeight - 56),
-        AnchorPoint = Vector2.new(0.5, 0),
-        BackgroundColor3 = T.input,
-        BorderSizePixel = 0,
-        Text = "",
-        AutoButtonColor = false,
-        ZIndex = 102,
-        Parent = c.gkCard,
-    })
-    UI.corner(gkClose, 8)
-    UI.stroke(gkClose, T.inputborder, 1)
-    UI.new("TextLabel", { Size = UDim2.new(1, 0, 1, 0), BackgroundTransparency = 1, Text = "Close", TextColor3 = T.gray, Font = Enum.Font.GothamSemibold, TextSize = 12, ZIndex = 103, Parent = gkClose })
-
-    gkClose.MouseEnter:Connect(function() UI.tween(gkClose, 0.15, { BackgroundColor3 = T.hover }) end)
-    gkClose.MouseLeave:Connect(function() UI.tween(gkClose, 0.15, { BackgroundColor3 = T.input }) end)
-
-    c.gkOverlay.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            local m = input.Position
-            local p, s = c.gkCard.AbsolutePosition, c.gkCard.AbsoluteSize
-            if m.X < p.X or m.X > p.X + s.X or m.Y < p.Y or m.Y > p.Y + s.Y then
-                UI.closePanel(c.gkOverlay, c.gkCard)
-            end
-        end
-    end)
-
-    c.gkHeight = gkHeight
-    c.gkClose = gkClose
 
     -- ── Settings Overlay ──
     c.stOverlay = UI.new("Frame", {
@@ -1130,14 +822,12 @@ local Loader = {}
 function Loader.new()
     local self = {
         ui = nil,
-        keyMgr = nil,
         api = nil,
         toastThread = nil,
     }
 
     function self.init()
         Utils.ensureFolder(CONFIG.FOLDER_ROOT)
-        Utils.ensureFolder(CONFIG.FOLDER_KEYS)
 
         self.api = {}
 
@@ -1253,29 +943,6 @@ end
     self.validateKey()
 end)
 
-        ui.getKeyBtn.MouseButton1Click:Connect(function()
-            UI.openPanel(ui.gkOverlay, ui.gkCard, ui.gkHeight)
-        end)
-
-        ui.noKeyLink.MouseButton1Click:Connect(function()
-            UI.openPanel(ui.gkOverlay, ui.gkCard, ui.gkHeight)
-        end)
-
-        ui.gkClose.MouseButton1Click:Connect(function()
-            UI.closePanel(ui.gkOverlay, ui.gkCard)
-        end)
-
-        for _, entry in ui.gkLinkButtons do
-            entry.button.MouseButton1Click:Connect(function()
-                if entry.data.url and entry.data.url ~= "" then
-                    if setclipboard then
-                        setclipboard(entry.data.url)
-                        self.notify("Copied", entry.data.name .. " link copied!", T.accent)
-                    end
-                end
-            end)
-        end
-
         ui.discordBtn.MouseButton1Click:Connect(function() self.openDiscord() end)
 
         ui.settingsBtn.MouseButton1Click:Connect(function()
@@ -1341,23 +1008,8 @@ end)
             UI.tween(ui.hSep, 0.35, { BackgroundTransparency = 0 })
             task.wait(0.06)
 
-            UI.tween(ui.keyLabel, 0.35, { TextTransparency = 0 })
-            UI.tween(ui.noKeyLink, 0.35, { TextTransparency = 0 })
-            task.wait(0.06)
-
-            UI.tween(ui.inputFrame, 0.35, { BackgroundTransparency = 0 })
-            UI.tween(ui.inputStroke, 0.35, { Transparency = 0 })
-            UI.tween(ui.inputIcon, 0.35, { TextTransparency = 0 })
-            UI.tween(ui.keyBox, 0.35, { TextTransparency = 0 })
-            task.wait(0.06)
-
             UI.tween(ui.redeemBtn, 0.35, { BackgroundTransparency = 0 })
             UI.tween(ui.redeemLabel, 0.35, { TextTransparency = 0 })
-            task.wait(0.06)
-
-            UI.tween(ui.getKeyBtn, 0.35, { BackgroundTransparency = 0 })
-            UI.tween(ui.getKeyStroke, 0.35, { Transparency = 0 })
-            UI.tween(ui.getKeyLabel, 0.35, { TextTransparency = 0 })
             task.wait(0.06)
 
             UI.tween(ui.bSep, 0.35, { BackgroundTransparency = 0 })
